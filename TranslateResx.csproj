@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.AI.Translation.Text" Version="1.0.0-beta.1" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.48" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="8.0.0.7345" />
+    <PackageReference Include="Microsoft.Azure.CognitiveServices.Language.LUIS.Runtime" Version="3.1.0-preview.1" />
+    <PackageReference Include="runtime.any.System.Resources.ResourceManager" Version="4.3.0" />
+    <PackageReference Include="System.Resources.Extensions" Version="8.0.0-preview.5.23280.8" />
+    <PackageReference Include="System.Resources.Reader" Version="4.3.0" />
+    <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
+    <PackageReference Include="System.Resources.Writer" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>
