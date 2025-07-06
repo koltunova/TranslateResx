@@ -119,7 +119,7 @@ class Program
     private static async Task RunTranslateInteractive(IConfiguration configuration)
     {
         string defaultResourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
-        string defaultSourceLanguage = "en-US";
+        string defaultSourceLanguage = "en";
         string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
 
         // Ask the user for the folder that contains the Strings.<culture>.resx files.
@@ -146,11 +146,11 @@ class Program
             return;
         }
 
-        string sourceFilePath = Path.Combine(resourcesDir, $"Strings.{sourceLanguage}.resx");
+        string sourceFilePath = GetExistingResourceFilePath(resourcesDir, sourceLanguage);
 
         foreach (var lang in targetLanguages)
         {
-            string targetFilePath = Path.Combine(resourcesDir, $"Strings.{lang}.resx");
+            string targetFilePath = GetExistingResourceFilePath(resourcesDir, lang);
             Console.WriteLine();
             Console.WriteLine($"Source file: {sourceFilePath}");
             Console.WriteLine($"Target file: {targetFilePath}");
@@ -207,7 +207,7 @@ class Program
             string updated = string.Empty;
             if (!string.IsNullOrWhiteSpace(resourcesPath))
             {
-                string path = Path.Combine(resourcesPath, $"Strings.{culture.Name}.resx");
+                string path = GetExistingResourceFilePath(resourcesPath, culture.Name);
                 if (File.Exists(path))
                 {
                     var info = new FileInfo(path);
@@ -218,6 +218,30 @@ class Program
             }
             Console.WriteLine($"{culture.Name,-10} {name,-30} {fileName,-20} {size,10} {updated,-20}");
         }
+    }
+
+    private static string GetExistingResourceFilePath(string baseDir, string languageCode)
+    {
+        string fullPath = Path.Combine(baseDir, $"Strings.{languageCode}.resx");
+        if (File.Exists(fullPath))
+            return fullPath;
+
+        try
+        {
+            var culture = new CultureInfo(languageCode);
+            if (!string.Equals(culture.Name, culture.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase))
+            {
+                string shortPath = Path.Combine(baseDir, $"Strings.{culture.TwoLetterISOLanguageName}.resx");
+                if (File.Exists(shortPath))
+                    return shortPath;
+            }
+        }
+        catch (CultureNotFoundException)
+        {
+            // Ignore invalid culture codes and just return the original path
+        }
+
+        return fullPath;
     }
 
 
