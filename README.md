@@ -51,7 +51,17 @@ TranslateResx cleanup --source <resx> --target <file1> [<file2> ...]
 - `--language` sets the language to translate into.
 - `cleanup` compares target `.resx` files with the source one and removes items not found in the source.
 
-The actual processing for these options is not yet implemented.
+
+### Example
+
+To translate a resource file into another language, run a command like:
+
+```
+TranslateResx translate --source Strings.resx --target Strings.ru.resx --language ru
+```
+
+This command would read `Strings.resx`, translate each string into Russian and
+save the result as `Strings.ru.resx`.
 
 
 Contributing
