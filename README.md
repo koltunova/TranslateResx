@@ -29,6 +29,22 @@ Update settings in `appsettings.json`. Use `appsettings.Development.json` or `ap
 
 Run the program with .NET CLI
 
+### Command line usage
+
+```
+TranslateResx translate [--all|--missing] [--source <resx>] [--target <resx>] [--language <lang>]
+TranslateResx cleanup --example <resx> --files <file1> [<file2> ...]
+```
+
+- `--all` translates every item in the target file.
+- `--missing` translates only the items missing from the target file.
+- `--source` allows you to specify which `Strings.resx` to use as the source of truth.
+- `--language` sets the language to translate into.
+- `cleanup` compares selected `.resx` files with the example one and removes items not found in the example.
+
+The actual processing for these options is not yet implemented.
+
+
 Contributing
 Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are greatly appreciated.
 
