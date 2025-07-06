@@ -65,20 +65,24 @@ class Program
         // that .NET can handle formatting and resource lookups correctly.
         CultureInfo[] supportedCultures = supportedCultureCodes.Select(code => new CultureInfo(code)).ToArray();
 
-        // Display the configured languages in a table so we can also show
-        // information about existing resource files.
+        // Save the resources path so it can be reused when the menu is shown.
         string resourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
-        PrintLanguagesTable(supportedCultures, resourcesPath);
 
-        // The example languages list is shorter and intended to show beginners
-        // which languages they might want to try translating into.
-        Console.WriteLine();
-        Console.WriteLine("Example languages: " + string.Join(", ", exampleLanguages
-            .Select(l => LanguageData.Names.TryGetValue(l, out var n) ? $"{l} ({n})" : l)));
         // Start a simple menu loop so the user can choose what to do next.
         // This loop continues until the user selects the Quit option.
         while (true)
         {
+            Console.WriteLine();
+            // Display the configured languages table every time the menu appears
+            // so the user can easily see available resources.
+            PrintLanguagesTable(supportedCultures, resourcesPath);
+
+            // The example languages list is shorter and intended to show beginners
+            // which languages they might want to try translating into.
+            Console.WriteLine();
+            Console.WriteLine("Example languages: " + string.Join(", ", exampleLanguages
+                .Select(l => LanguageData.Names.TryGetValue(l, out var n) ? $"{l} ({n})" : l)));
+
             Console.WriteLine();
             Console.WriteLine("Select an option:");
             Console.WriteLine("1. Translate resource file");
@@ -118,15 +122,12 @@ class Program
     /// </summary>
     private static async Task RunTranslateInteractive(IConfiguration configuration)
     {
-        string defaultResourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
+        string resourcesDir = configuration["Files:ResourcesPath"] ?? string.Empty;
         string defaultSourceLanguage = "en";
         string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
 
-        // Ask the user for the folder that contains the Strings.<culture>.resx files.
-        Console.Write($"Resources directory [{defaultResourcesPath}]: ");
-        string? resourcesDir = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(resourcesDir))
-            resourcesDir = defaultResourcesPath;
+        // Show the user which resources directory will be used.
+        Console.WriteLine($"Resources directory: {resourcesDir}");
 
         // The UI now builds file names based on the languages the user enters.
         Console.Write($"Source language code [{defaultSourceLanguage}]: ");
@@ -146,13 +147,13 @@ class Program
             return;
         }
 
-        string sourceFilePath = GetExistingResourceFilePath(resourcesDir, sourceLanguage);
+        string sourceFilePath = GetExistingResourceFilePath(resourcesDir, sourceLanguage, true);
+        Console.WriteLine($"Source file: {sourceFilePath}");
 
         foreach (var lang in targetLanguages)
         {
-            string targetFilePath = GetExistingResourceFilePath(resourcesDir, lang);
+            string targetFilePath = GetExistingResourceFilePath(resourcesDir, lang, true);
             Console.WriteLine();
-            Console.WriteLine($"Source file: {sourceFilePath}");
             Console.WriteLine($"Target file: {targetFilePath}");
             Console.WriteLine($"Language: {lang}");
 
@@ -207,7 +208,7 @@ class Program
             string updated = string.Empty;
             if (!string.IsNullOrWhiteSpace(resourcesPath))
             {
-                string path = GetExistingResourceFilePath(resourcesPath, culture.Name);
+                string path = GetExistingResourceFilePath(resourcesPath, culture.Name, true);
                 if (File.Exists(path))
                 {
                     var info = new FileInfo(path);
@@ -220,7 +221,7 @@ class Program
         }
     }
 
-    private static string GetExistingResourceFilePath(string baseDir, string languageCode)
+    private static string GetExistingResourceFilePath(string baseDir, string languageCode, bool fallBackToDefault = false)
     {
         string fullPath = Path.Combine(baseDir, $"Strings.{languageCode}.resx");
         if (File.Exists(fullPath))
@@ -239,6 +240,24 @@ class Program
         catch (CultureNotFoundException)
         {
             // Ignore invalid culture codes and just return the original path
+        }
+
+        if (fallBackToDefault)
+        {
+            try
+            {
+                var culture = new CultureInfo(languageCode);
+                if (culture.TwoLetterISOLanguageName.Equals("en", StringComparison.OrdinalIgnoreCase))
+                {
+                    string defaultPath = Path.Combine(baseDir, "Strings.resx");
+                    if (File.Exists(defaultPath))
+                        return defaultPath;
+                }
+            }
+            catch (CultureNotFoundException)
+            {
+                // Ignore invalid culture codes and proceed
+            }
         }
 
         return fullPath;
