@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Xml.Linq;
 
+using System.IO;
 /// <summary>
 /// Entry point and main workflow for the TranslateResx console application.
 /// The program allows you to translate .resx resource files using the
@@ -64,36 +65,16 @@ class Program
         // that .NET can handle formatting and resource lookups correctly.
         CultureInfo[] supportedCultures = supportedCultureCodes.Select(code => new CultureInfo(code)).ToArray();
 
-        // Display the configured languages so the user knows what is
-        // available. LanguageData.Names maps the language code to a friendly
-        // display name.
-        Console.WriteLine("Supported cultures:");
-        foreach (var culture in supportedCultures)
-        {
-            if (LanguageData.Names.TryGetValue(culture.Name, out var display))
-            {
-                Console.WriteLine($" - {culture.Name} ({display})");
-            }
-            else
-            {
-                Console.WriteLine($" - {culture.Name}");
-            }
-        }
-        // The example languages list is shorter and intended to show
-        // beginners which languages they might want to try translating into.
-        Console.WriteLine("Example languages:");
-        foreach (var lang in exampleLanguages)
-        {
-            if (LanguageData.Names.TryGetValue(lang, out var name))
-            {
-                Console.WriteLine($" - {lang} ({name})");
-            }
-            else
-            {
-                Console.WriteLine($" - {lang}");
-            }
-        }
+        // Display the configured languages in a table so we can also show
+        // information about existing resource files.
+        string resourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
+        PrintLanguagesTable(supportedCultures, resourcesPath);
 
+        // The example languages list is shorter and intended to show beginners
+        // which languages they might want to try translating into.
+        Console.WriteLine();
+        Console.WriteLine("Example languages: " + string.Join(", ", exampleLanguages
+            .Select(l => LanguageData.Names.TryGetValue(l, out var n) ? $"{l} ({n})" : l)));
         // Start a simple menu loop so the user can choose what to do next.
         // This loop continues until the user selects the Quit option.
         while (true)
@@ -211,6 +192,32 @@ class Program
         }
 
         Console.WriteLine("Cleanup functionality is not implemented yet.");
+    }
+
+    private static void PrintLanguagesTable(IEnumerable<CultureInfo> cultures, string resourcesPath)
+    {
+        Console.WriteLine("Supported cultures:");
+        Console.WriteLine($"{"Code",-10} {"Name",-30} {"File",-20} {"Size",10} {"Updated",-20}");
+        Console.WriteLine(new string('-', 92));
+        foreach (var culture in cultures)
+        {
+            string name = LanguageData.Names.TryGetValue(culture.Name, out var display) ? display : culture.DisplayName;
+            string fileName = string.Empty;
+            string size = string.Empty;
+            string updated = string.Empty;
+            if (!string.IsNullOrWhiteSpace(resourcesPath))
+            {
+                string path = Path.Combine(resourcesPath, $"Strings.{culture.Name}.resx");
+                if (File.Exists(path))
+                {
+                    var info = new FileInfo(path);
+                    fileName = info.Name;
+                    size = info.Length.ToString();
+                    updated = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm");
+                }
+            }
+            Console.WriteLine($"{culture.Name,-10} {name,-30} {fileName,-20} {size,10} {updated,-20}");
+        }
     }
 
 

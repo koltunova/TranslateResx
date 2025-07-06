@@ -50,6 +50,11 @@ Only a few values are required:
 
 When you run the application with no command line arguments a simple menu is displayed. Choose **Translate resource file** and you will be prompted for the resources directory, the source language and one or more target languages. If you press Enter without typing a directory, the value from `appsettings.json` is used. Leaving the source language blank defaults to `en-US`. The tool automatically builds file names like `Strings.en.resx` or `Strings.fr.resx` based on your input.
 
+When the tool starts it prints a table of all configured cultures.
+The table shows each language code, its friendly name and information
+about any existing resource file found in `ResourcesPath`, including
+file size and the last modification date.
+
 Run the program with .NET CLI
 
 ### Command line usage
