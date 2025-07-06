@@ -138,6 +138,7 @@ class Program
     private static async Task RunTranslateInteractive(IConfiguration configuration)
     {
         string defaultResourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
+        string defaultSourceLanguage = "en-US";
         string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
 
         // Ask the user for the folder that contains the Strings.<culture>.resx files.
@@ -147,8 +148,10 @@ class Program
             resourcesDir = defaultResourcesPath;
 
         // The UI now builds file names based on the languages the user enters.
-        Console.Write("Source language code (e.g. en-US): ");
+        Console.Write($"Source language code [{defaultSourceLanguage}]: ");
         string? sourceLanguage = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(sourceLanguage))
+            sourceLanguage = defaultSourceLanguage;
 
         Console.Write("Target language codes (space separated): ");
         string? targetLanguagesInput = Console.ReadLine();
@@ -156,7 +159,6 @@ class Program
             .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         if (string.IsNullOrWhiteSpace(resourcesDir) ||
-            string.IsNullOrWhiteSpace(sourceLanguage) ||
             targetLanguages.Length == 0)
         {
             Console.WriteLine("Resource directory and languages are required.");

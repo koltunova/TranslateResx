@@ -48,7 +48,7 @@ Only a few values are required:
 
 `SupportedCultures` defines which languages appear in the menu while `ExampleLanguages` provides quick suggestions. `ResourcesPath` should point to the directory that contains all your `.resx` files. Language codes are mapped to display names in `LanguageData.cs` so that the UI can show user-friendly names while the configuration continues to use codes.
 
-When you run the application with no command line arguments a simple menu is displayed. Choose **Translate resource file** and you will be prompted for the resources directory, the source language and one or more target languages. The tool automatically builds file names like `Strings.en.resx` or `Strings.fr.resx` based on your input.
+When you run the application with no command line arguments a simple menu is displayed. Choose **Translate resource file** and you will be prompted for the resources directory, the source language and one or more target languages. If you press Enter without typing a directory, the value from `appsettings.json` is used. Leaving the source language blank defaults to `en-US`. The tool automatically builds file names like `Strings.en.resx` or `Strings.fr.resx` based on your input.
 
 Run the program with .NET CLI
 
@@ -69,7 +69,7 @@ TranslateResx cleanup --source <resx> --target <file1> [<file2> ...]
 ### Example
 
 Run the tool without arguments and select **Translate resource file** from the menu.
-Enter the resources directory, choose a source language (e.g. `en`) and provide one or more target languages separated by spaces. For instance entering `de fr` will create `Strings.de.resx` and `Strings.fr.resx` next to your source file.
+When prompted you can press Enter to use the resources directory from `appsettings.json` and leave the source language blank to use `en-US`. Then enter one or more target languages separated by spaces. For instance entering `de fr` will create `Strings.de.resx` and `Strings.fr.resx` next to your source file.
 
 
 Contributing
