@@ -2,6 +2,9 @@ using Azure.AI.Translation.Text;
 using Azure;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Localization;
+using System.Globalization;
 using System.Xml.Linq;
 
 class Program
@@ -15,6 +18,48 @@ class Program
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
+
+        var services = new ServiceCollection();
+        services.AddLocalization();
+        services.AddSingleton(serviceProvider =>
+        {
+            var factory = serviceProvider.GetRequiredService<IStringLocalizerFactory>();
+            // Load "Strings" resources using the L namespace
+            return factory.Create("Strings", typeof(L.Strings).Assembly.FullName);
+        });
+
+        using var serviceProvider = services.BuildServiceProvider();
+        serviceProvider.GetRequiredService<IStringLocalizer>();
+
+        var supportedCultureCodes = configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? Array.Empty<string>();
+        var exampleLanguages = configuration.GetSection("Localization:ExampleLanguages").Get<string[]>() ?? Array.Empty<string>();
+
+        CultureInfo[] supportedCultures = supportedCultureCodes.Select(code => new CultureInfo(code)).ToArray();
+
+        Console.WriteLine("Supported cultures:");
+        foreach (var culture in supportedCultures)
+        {
+            if (LanguageData.Names.TryGetValue(culture.Name, out var display))
+            {
+                Console.WriteLine($" - {culture.Name} ({display})");
+            }
+            else
+            {
+                Console.WriteLine($" - {culture.Name}");
+            }
+        }
+        Console.WriteLine("Example languages:");
+        foreach (var lang in exampleLanguages)
+        {
+            if (LanguageData.Names.TryGetValue(lang, out var name))
+            {
+                Console.WriteLine($" - {lang} ({name})");
+            }
+            else
+            {
+                Console.WriteLine($" - {lang}");
+            }
+        }
 
         if (args.Length == 0)
         {

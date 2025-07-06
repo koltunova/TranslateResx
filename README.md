@@ -25,7 +25,16 @@ Remember to keep your subscription key secure! Do not share your subscription ke
 
 Configuration
 
-Update settings in `appsettings.json`. Use `appsettings.Development.json` or `appsettings.Production.json` for environment specific overrides. Set the `DOTNET_ENVIRONMENT` environment variable to `Development` or `Production` when running the tool. Provide your Azure subscription key, source and target file paths, and the target language in the configuration files.
+Update settings in `appsettings.json`. Use `appsettings.Development.json` or `appsettings.Production.json` for environment specific overrides. Set the `DOTNET_ENVIRONMENT` environment variable to `Development` or `Production` when running the tool. Provide your Azure subscription key, source and target file paths, the target language, and lists of supported and example languages in the configuration files.
+
+```
+"Localization": {
+  "SupportedCultures": ["en-US", "de-DE", ...],
+  "ExampleLanguages": ["en", "ru"]
+}
+```
+Language codes are mapped to display names in `LanguageData.cs` so that a UI can
+present friendly language names while the configuration continues to use codes.
 
 Run the program with .NET CLI
 

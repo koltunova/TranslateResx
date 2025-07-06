@@ -1,5 +1,54 @@
 {
   "Translation": {
     "TargetLanguage": "de"
+  },
+  "Localization": {
+    "SupportedCultures": [
+      "en-US",
+      "ar",
+      "hy-AM",
+      "az",
+      "be-BY",
+      "bg-BG",
+      "zh-CHS",
+      "cs-CZ",
+      "da-DK",
+      "nl-NL",
+      "et-EE",
+      "fi-FI",
+      "fr-FR",
+      "ka-GE",
+      "de-DE",
+      "el-GR",
+      "id-ID",
+      "it-IT",
+      "ja-JP",
+      "ko-KR",
+      "ky-KG",
+      "lv-LV",
+      "lt-LT",
+      "hi-IN",
+      "hu-HU",
+      "kk-KZ",
+      "nb-NO",
+      "pl-PL",
+      "pt-PT",
+      "sk-SK",
+      "sl-SI",
+      "es-ES",
+      "sv-SE",
+      "syr-SY",
+      "ro-RO",
+      "ru-RU",
+      "tt-RU",
+      "th-TH",
+      "tr-TR",
+      "uk-UA",
+      "vi-VN"
+    ],
+    "ExampleLanguages": [
+      "en",
+      "ru"
+    ]
   }
 }
