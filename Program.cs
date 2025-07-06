@@ -61,74 +61,88 @@ class Program
             }
         }
 
-        if (args.Length == 0)
+        while (true)
         {
-            PrintHelp();
-            return 1;
+            Console.WriteLine();
+            Console.WriteLine("Select an option:");
+            Console.WriteLine("1. Translate resource file");
+            Console.WriteLine("2. Cleanup resource files");
+            Console.WriteLine("3. Quit");
+            Console.Write(" > ");
+
+            var choice = Console.ReadLine()?.Trim().ToLowerInvariant();
+            Console.WriteLine();
+
+            switch (choice)
+            {
+                case "1":
+                case "translate":
+                    await RunTranslateInteractive(configuration);
+                    break;
+                case "2":
+                case "cleanup":
+                    RunCleanupInteractive();
+                    break;
+                case "3":
+                case "q":
+                case "quit":
+                    return 0;
+                default:
+                    Console.WriteLine("Unknown option. Please try again.");
+                    break;
+            }
         }
-
-        var command = args[0].ToLowerInvariant();
-        var cmdArgs = args.Skip(1).ToArray();
-
-        switch (command)
-        {
-            case "translate":
-                await RunTranslate(cmdArgs, configuration);
-                break;
-            case "cleanup":
-                RunCleanup(cmdArgs);
-                break;
-            default:
-                PrintHelp();
-                break;
-        }
-
-        return 0;
     }
 
-    private static void PrintHelp()
+    private static async Task RunTranslateInteractive(IConfiguration configuration)
     {
-        Console.WriteLine("TranslateResx CLI");
-        Console.WriteLine();
-        Console.WriteLine("Commands:");
-        Console.WriteLine("  translate   Translate resource files");
-        Console.WriteLine("  cleanup     Remove entries not present in source file");
-        Console.WriteLine();
-        Console.WriteLine("translate options:");
-        Console.WriteLine("  --all             translate all items");
-        Console.WriteLine("  --missing         translate only missing items");
-        Console.WriteLine("  --source <file>   path to source Strings.resx");
-        Console.WriteLine("  --target <file>   path to target resx file");
-        Console.WriteLine("  --language <lang> target language");
-        Console.WriteLine();
-        Console.WriteLine("cleanup options:");
-        Console.WriteLine("  --source <file>   source resx file");
-        Console.WriteLine("  --target <files>  resx files to clean separated by space");
-    }
-
-    private static async Task RunTranslate(string[] args, IConfiguration configuration)
-    {
-        bool all = args.Contains("--all");
-        bool missing = args.Contains("--missing");
-        string? sourceFilePath = GetOption(args, "--source") ?? configuration["Files:Source"];
-        string? targetFilePath = GetOption(args, "--target") ?? configuration["Files:Target"];
-        string? targetLanguage = GetOption(args, "--language") ?? configuration["Translation:TargetLanguage"];
+        string defaultSource = configuration["Files:Source"] ?? string.Empty;
+        string defaultTarget = configuration["Files:Target"] ?? string.Empty;
+        string defaultLanguage = configuration["Translation:TargetLanguage"] ?? string.Empty;
         string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
 
+        Console.Write($"Source file [{defaultSource}]: ");
+        string? sourceFilePath = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(sourceFilePath))
+            sourceFilePath = defaultSource;
+
+        Console.Write($"Target file [{defaultTarget}]: ");
+        string? targetFilePath = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(targetFilePath))
+            targetFilePath = defaultTarget;
+
+        Console.Write($"Language [{defaultLanguage}]: ");
+        string? targetLanguage = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(targetLanguage))
+            targetLanguage = defaultLanguage;
+
+        Console.Write("Translate all items? (y/N): ");
+        var allInput = Console.ReadLine();
+        bool all = allInput?.Trim().ToLowerInvariant().StartsWith("y") == true;
+
+        Console.WriteLine();
         Console.WriteLine($"Source file: {sourceFilePath}");
         Console.WriteLine($"Target file: {targetFilePath}");
         Console.WriteLine($"Language: {targetLanguage}");
         Console.WriteLine(all ? "Translate all items" : "Translate missing items");
 
-        // TODO: implement support for the command options
         await TranslateResxFile(subscriptionKey, sourceFilePath, targetFilePath, targetLanguage);
     }
 
-    private static void RunCleanup(string[] args)
+    private static void RunCleanupInteractive()
     {
-        string? sourceFile = GetOption(args, "--source");
-        var targetFiles = GetOptions(args, "--target");
+        Console.Write("Source file: ");
+        string? sourceFile = Console.ReadLine();
 
+        Console.Write("Target files (space separated): ");
+        string? targets = Console.ReadLine();
+        var targetFiles = (targets ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        RunCleanup(sourceFile, targetFiles);
+    }
+
+    private static void RunCleanup(string? sourceFile, IEnumerable<string> targetFiles)
+    {
         Console.WriteLine($"Source file: {sourceFile}");
         Console.WriteLine("Target files:");
         foreach (var f in targetFiles)
@@ -139,25 +153,6 @@ class Program
         Console.WriteLine("Cleanup functionality is not implemented yet.");
     }
 
-    private static string? GetOption(string[] args, string name)
-    {
-        var index = Array.IndexOf(args, name);
-        if (index >= 0 && index < args.Length - 1)
-        {
-            return args[index + 1];
-        }
-        return null;
-    }
-
-    private static IEnumerable<string> GetOptions(string[] args, string name)
-    {
-        var index = Array.IndexOf(args, name);
-        if (index >= 0)
-        {
-            return args.Skip(index + 1).TakeWhile(a => !a.StartsWith("--"));
-        }
-        return Array.Empty<string>();
-    }
 
     private static async Task TranslateResxFile(string? subscriptionKey, string? sourceFilePath, string? targetFilePath, string? targetLanguage)
     {
