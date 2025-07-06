@@ -135,45 +135,44 @@ class Program
     /// </summary>
     private static async Task RunTranslateInteractive(IConfiguration configuration)
     {
-        string defaultSource = configuration["Files:Source"] ?? string.Empty;
-        string defaultTarget = configuration["Files:Target"] ?? string.Empty;
-        string defaultLanguage = configuration["Translation:TargetLanguage"] ?? string.Empty;
+        string defaultResourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
         string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
 
-        // Ask the user for the source .resx file. Hitting Enter uses the
-        // value from configuration.
-        Console.Write($"Source file [{defaultSource}]: ");
-        string? sourceFilePath = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(sourceFilePath))
-            sourceFilePath = defaultSource;
+        // Ask the user for the folder that contains the Strings.<culture>.resx files.
+        Console.Write($"Resources directory [{defaultResourcesPath}]: ");
+        string? resourcesDir = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(resourcesDir))
+            resourcesDir = defaultResourcesPath;
 
-        // Ask for the output file that will contain the translations.
-        Console.Write($"Target file [{defaultTarget}]: ");
-        string? targetFilePath = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(targetFilePath))
-            targetFilePath = defaultTarget;
+        // The UI now builds file names based on the languages the user enters.
+        Console.Write("Source language code (e.g. en-US): ");
+        string? sourceLanguage = Console.ReadLine();
 
-        // Let the user choose which language to translate into.
-        Console.Write($"Language [{defaultLanguage}]: ");
-        string? targetLanguage = Console.ReadLine();
-        if (string.IsNullOrWhiteSpace(targetLanguage))
-            targetLanguage = defaultLanguage;
+        Console.Write("Target language codes (space separated): ");
+        string? targetLanguagesInput = Console.ReadLine();
+        var targetLanguages = (targetLanguagesInput ?? string.Empty)
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-        // The translation service can translate every entry or only those that
-        // are missing from the target file. This simple Yes/No question decides
-        // which behaviour to use.
-        Console.Write("Translate all items? (y/N): ");
-        var allInput = Console.ReadLine();
-        bool all = allInput?.Trim().ToLowerInvariant().StartsWith("y") == true;
+        if (string.IsNullOrWhiteSpace(resourcesDir) ||
+            string.IsNullOrWhiteSpace(sourceLanguage) ||
+            targetLanguages.Length == 0)
+        {
+            Console.WriteLine("Resource directory and languages are required.");
+            return;
+        }
 
-        Console.WriteLine();
-        Console.WriteLine($"Source file: {sourceFilePath}");
-        Console.WriteLine($"Target file: {targetFilePath}");
-        Console.WriteLine($"Language: {targetLanguage}");
-        Console.WriteLine(all ? "Translate all items" : "Translate missing items");
+        string sourceFilePath = Path.Combine(resourcesDir, $"Strings.{sourceLanguage}.resx");
 
-        // Perform the actual translation work.
-        await TranslateResxFile(subscriptionKey, sourceFilePath, targetFilePath, targetLanguage);
+        foreach (var lang in targetLanguages)
+        {
+            string targetFilePath = Path.Combine(resourcesDir, $"Strings.{lang}.resx");
+            Console.WriteLine();
+            Console.WriteLine($"Source file: {sourceFilePath}");
+            Console.WriteLine($"Target file: {targetFilePath}");
+            Console.WriteLine($"Language: {lang}");
+
+            await TranslateResxFile(subscriptionKey, sourceFilePath, targetFilePath, lang);
+        }
     }
 
     /// <summary>
