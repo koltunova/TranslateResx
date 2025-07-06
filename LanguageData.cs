@@ -1,7 +1,16 @@
 using System.Collections.Generic;
 
+/// <summary>
+/// Provides mappings between language codes (such as "en-US") and human
+/// readable display names. This is useful for presenting friendly language
+/// names to the user while still working with the ISO codes internally.
+/// </summary>
 public static class LanguageData
 {
+    /// <summary>
+    /// Dictionary of language codes to display names. Add or remove entries
+    /// here if your application needs to support additional languages.
+    /// </summary>
     public static readonly Dictionary<string, string> Names = new()
     {
         ["en-US"] = "English (United States)",
