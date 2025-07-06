@@ -1,0 +1,12 @@
+{
+  "AzureTranslation": {
+    "SubscriptionKey": "your_subscription_key"
+  },
+  "Files": {
+    "Source": "path_to_your_source_file_here",
+    "Target": "path_to_your_target_file_here"
+  },
+  "Translation": {
+    "TargetLanguage": "target_language_here"
+  }
+}

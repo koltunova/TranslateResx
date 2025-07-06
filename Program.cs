@@ -1,44 +1,52 @@
-﻿using Azure.AI.Translation.Text;
-using System.Xml.Linq;
-using HtmlAgilityPack;
+using Azure.AI.Translation.Text;
 using Azure;
+using HtmlAgilityPack;
+using Microsoft.Extensions.Configuration;
+using System.Xml.Linq;
 
-// Define your Azure Translation service credentials and file paths
-string subscriptionKey = "your_subscription_key";
-string subscriptionKey = "<your_subscription_key_here>";
-string sourceFilePath = "<path_to_your_source_file_here>";
-string targetFilePath = "<path_to_your_target_file_here>";
-string targetLanguage = "<target_language_here>";
+var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Production";
 
-// Create an AzureKeyCredential object using your subscription key
+IConfiguration configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: false)
+    .AddJsonFile($"appsettings.{environment}.json", optional: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
+string? sourceFilePath = configuration["Files:Source"];
+string? targetFilePath = configuration["Files:Target"];
+string? targetLanguage = configuration["Translation:TargetLanguage"];
+
+if (string.IsNullOrWhiteSpace(subscriptionKey) ||
+    string.IsNullOrWhiteSpace(sourceFilePath) ||
+    string.IsNullOrWhiteSpace(targetFilePath) ||
+    string.IsNullOrWhiteSpace(targetLanguage))
+{
+    Console.WriteLine("One or more required configuration values are missing.");
+    return;
+}
+
 AzureKeyCredential credential = new(subscriptionKey);
 
-// Initialize the TextTranslationClient with your credentials
 TextTranslationClient translationService;
-
 try
 {
     translationService = new TextTranslationClient(credential);
 }
-catch (UriFormatException)
+catch (Exception ex) when (ex is UriFormatException || ex is ArgumentException)
 {
-    Console.WriteLine("The endpoint URL is not valid.");
-    return;
-}
-catch (ArgumentException)
-{
-    Console.WriteLine("The subscription key is not valid.");
+    Console.WriteLine(ex is UriFormatException
+        ? "The endpoint URL is not valid."
+        : "The subscription key is not valid.");
     return;
 }
 
-// Check if the source file exists
 if (!File.Exists(sourceFilePath))
 {
     Console.WriteLine($"Source file not found: {sourceFilePath}");
     return;
 }
 
-// Load the source .resx file as an XDocument
 XDocument sourceDoc;
 try
 {
@@ -50,7 +58,6 @@ catch (Exception ex)
     return;
 }
 
-// Select all "data" elements that have a "value" child element
 var dataElements = sourceDoc.Descendants("data")
                             .Where(x => x.Element("value") != null);
 
@@ -60,25 +67,18 @@ if (!dataElements.Any())
     return;
 }
 
-// Iterate over each "data" element
 foreach (var dataElement in dataElements)
 {
-    // Get the source text from the "value" element
-    string sourceText = dataElement.Element("value")?.Value;
+    string sourceText = dataElement.Element("value")?.Value ?? string.Empty;
 
-    if (sourceText == null)
-    {
+    if (string.IsNullOrEmpty(sourceText))
         continue;
-    }
 
-    // Translate the source text
     try
     {
-        // Create a new HtmlDocument and load the source text into it
         HtmlDocument doc = new HtmlDocument();
         doc.LoadHtml(sourceText);
 
-        // Iterate over each text node in the HtmlDocument
         foreach (var textNode in doc.DocumentNode.DescendantsAndSelf().Where(n => n.NodeType == HtmlNodeType.Text))
         {
             string nodeText = textNode.InnerHtml;
@@ -86,20 +86,15 @@ foreach (var dataElement in dataElements)
             var result = response.Value.FirstOrDefault();
             string translatedText = result?.Translations.FirstOrDefault()?.Text;
 
-            // Replace the text in the text node with the translated text
             if (translatedText != null)
             {
                 textNode.InnerHtml = translatedText;
             }
         }
 
-        // Get the translated HTML
         string translatedHtml = doc.DocumentNode.OuterHtml;
+        dataElement.Element("value")!.Value = translatedHtml;
 
-        // Replace the text in the "value" element with the translated text
-        dataElement.Element("value").Value = translatedHtml;
-
-        // Output the source text and the translated text
         Console.WriteLine($"Source Text: {sourceText}");
         Console.WriteLine($"Translated Text: {translatedHtml}");
     }
@@ -110,5 +105,4 @@ foreach (var dataElement in dataElements)
     }
 }
 
-// Save the modified XDocument to the target file
 sourceDoc.Save(targetFilePath);
