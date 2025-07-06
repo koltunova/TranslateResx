@@ -1,8 +1,6 @@
 # TranslateResx
-open-source project that provides a simple and efficient way to translate .resx resource files into different languages
-# TranslateResx
+TranslateResx is an open-source project that provides a simple and efficient way to translate `.resx` resource files into different languages. It uses the `Azure.AI.Translation.Text` library to perform the translations.
 
-TranslateResx is an open-source project that provides a solution for translating .NET resource files (`.resx`) into different languages. It uses the Azure.AI.Translation.Text library to perform the translations.
 
 ## Features
 
@@ -25,13 +23,9 @@ Fill in the details: You'll need to fill in some details about your resource. Yo
 Get the key: Once your resource is created, go to "Resource Management" > "Keys and Endpoint". There you will find your key under "KEY1" or "KEY2". You can use either of these keys as your subscription key.
 Remember to keep your subscription key secure! Do not share your subscription key in your public GitHub repository. If your key is exposed, someone else could use it and incur charges on your account. Instead, you can instruct users to replace a placeholder text with their own subscription key in the code.
 
-Usage
+Configuration
 
-Set your Azure Cognitive Services subscription key and endpoint in the Program.cs file.
-<your_subscription_key_here> should be replaced with your Azure Text Translation service subscription key.
-<path_to_your_source_file_here> should be replaced with the full path to your source .resx file. For example, it might be something like "C:\\Users\\YourName\\source\\repos\\YourProject\\Resources\\Strings.resx".
-<path_to_your_target_file_here> should be replaced with the full path where you want the translated .resx file to be saved. For example, it might be something like "C:\\Users\\YourName\\source\\repos\\YourProject\\Resources\\Strings.de.resx".
-<target_language_here> should be replaced with the language code for the language you want to translate to. For example, for German, it would be "de".
+Update settings in `appsettings.json`. Use `appsettings.Development.json` or `appsettings.Production.json` for environment specific overrides. Set the `DOTNET_ENVIRONMENT` environment variable to `Development` or `Production` when running the tool. Provide your Azure subscription key, source and target file paths, and the target language in the configuration files.
 
 Run the program with .NET CLI
 
