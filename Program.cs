@@ -92,7 +92,7 @@ class Program
         Console.WriteLine();
         Console.WriteLine("Commands:");
         Console.WriteLine("  translate   Translate resource files");
-        Console.WriteLine("  cleanup     Remove entries not present in example file");
+        Console.WriteLine("  cleanup     Remove entries not present in source file");
         Console.WriteLine();
         Console.WriteLine("translate options:");
         Console.WriteLine("  --all             translate all items");
@@ -102,8 +102,8 @@ class Program
         Console.WriteLine("  --language <lang> target language");
         Console.WriteLine();
         Console.WriteLine("cleanup options:");
-        Console.WriteLine("  --example <file>  example resx file");
-        Console.WriteLine("  --files <files>   resx files to clean separated by space");
+        Console.WriteLine("  --source <file>   source resx file");
+        Console.WriteLine("  --target <files>  resx files to clean separated by space");
     }
 
     private static async Task RunTranslate(string[] args, IConfiguration configuration)
@@ -126,12 +126,12 @@ class Program
 
     private static void RunCleanup(string[] args)
     {
-        string? exampleFile = GetOption(args, "--example");
-        var files = GetOptions(args, "--files");
+        string? sourceFile = GetOption(args, "--source");
+        var targetFiles = GetOptions(args, "--target");
 
-        Console.WriteLine($"Example file: {exampleFile}");
-        Console.WriteLine("Files to clean:");
-        foreach (var f in files)
+        Console.WriteLine($"Source file: {sourceFile}");
+        Console.WriteLine("Target files:");
+        foreach (var f in targetFiles)
         {
             Console.WriteLine($" - {f}");
         }
