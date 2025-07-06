@@ -25,16 +25,30 @@ Remember to keep your subscription key secure! Do not share your subscription ke
 
 Configuration
 
-Update settings in `appsettings.json`. Use `appsettings.Development.json` or `appsettings.Production.json` for environment specific overrides. Set the `DOTNET_ENVIRONMENT` environment variable to `Development` or `Production` when running the tool. Provide your Azure subscription key, source and target file paths, the target language, and lists of supported and example languages in the configuration files.
+Update settings in `appsettings.json`. Use `appsettings.Development.json` or `appsettings.Production.json` for environment specific overrides. Set the `DOTNET_ENVIRONMENT` environment variable accordingly when running the tool.
+
+Only a few values are required:
 
 ```
-"Localization": {
-  "SupportedCultures": ["en-US", "de-DE", ...],
-  "ExampleLanguages": ["en", "ru"]
+{
+  "AzureTranslation": {
+    "SubscriptionKey": "your_subscription_key"
+  },
+  "Files": {
+    // Folder that holds Strings.<culture>.resx files
+    "ResourcesPath": "path_to_resources"
+  },
+  "Localization": {
+    "SupportedCultures": ["en-US", "de-DE", ...],
+    // Short list shown as suggestions in the UI
+    "ExampleLanguages": ["en", "ru"]
+  }
 }
 ```
-Language codes are mapped to display names in `LanguageData.cs` so that a UI can
-present friendly language names while the configuration continues to use codes.
+
+`SupportedCultures` defines which languages appear in the menu while `ExampleLanguages` provides quick suggestions. `ResourcesPath` should point to the directory that contains all your `.resx` files. Language codes are mapped to display names in `LanguageData.cs` so that the UI can show user-friendly names while the configuration continues to use codes.
+
+When you run the application with no command line arguments a simple menu is displayed. Choose **Translate resource file** and you will be prompted for the resources directory, the source language and one or more target languages. The tool automatically builds file names like `Strings.en.resx` or `Strings.fr.resx` based on your input.
 
 Run the program with .NET CLI
 
@@ -54,14 +68,8 @@ TranslateResx cleanup --source <resx> --target <file1> [<file2> ...]
 
 ### Example
 
-To translate a resource file into another language, run a command like:
-
-```
-TranslateResx translate --source Strings.resx --target Strings.ru.resx --language ru
-```
-
-This command would read `Strings.resx`, translate each string into Russian and
-save the result as `Strings.ru.resx`.
+Run the tool without arguments and select **Translate resource file** from the menu.
+Enter the resources directory, choose a source language (e.g. `en`) and provide one or more target languages separated by spaces. For instance entering `de fr` will create `Strings.de.resx` and `Strings.fr.resx` next to your source file.
 
 
 Contributing

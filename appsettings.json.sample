@@ -3,11 +3,8 @@
     "SubscriptionKey": "your_subscription_key"
   },
   "Files": {
-    "Source": "path_to_your_source_file_here",
-    "Target": "path_to_your_target_file_here"
-  },
-  "Translation": {
-    "TargetLanguage": "target_language_here"
+    // Folder containing all Strings.<culture>.resx files
+    "ResourcesPath": "path_to_your_resources_folder"
   },
   "Localization": {
     "SupportedCultures": [

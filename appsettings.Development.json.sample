@@ -1,6 +1,7 @@
 {
-  "Translation": {
-    "TargetLanguage": "de"
+  "Files": {
+    // Development-only path to your resource folder
+    "ResourcesPath": "path_to_your_resources_folder"
   },
   "Localization": {
     "SupportedCultures": [
