@@ -42,14 +42,14 @@ Run the program with .NET CLI
 
 ```
 TranslateResx translate [--all|--missing] [--source <resx>] [--target <resx>] [--language <lang>]
-TranslateResx cleanup --example <resx> --files <file1> [<file2> ...]
+TranslateResx cleanup --source <resx> --target <file1> [<file2> ...]
 ```
 
 - `--all` translates every item in the target file.
 - `--missing` translates only the items missing from the target file.
 - `--source` allows you to specify which `Strings.resx` to use as the source of truth.
 - `--language` sets the language to translate into.
-- `cleanup` compares selected `.resx` files with the example one and removes items not found in the example.
+- `cleanup` compares target `.resx` files with the source one and removes items not found in the source.
 
 The actual processing for these options is not yet implemented.
 
