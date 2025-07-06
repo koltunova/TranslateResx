@@ -4,6 +4,7 @@ using HtmlAgilityPack;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Xml.Linq;
 
@@ -41,6 +42,7 @@ class Program
         // Set up dependency injection. Here we only register the
         // localization services which provide access to .resx files.
         var services = new ServiceCollection();
+        services.AddLogging(); // <-- Add this line to register logging
         services.AddLocalization();
         services.AddSingleton(serviceProvider =>
         {
