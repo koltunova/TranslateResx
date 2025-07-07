@@ -53,7 +53,8 @@ When you run the application with no command line arguments a simple menu is dis
 Whenever the menu is displayed the program prints a table of all
 configured cultures. The table shows each language code, its friendly
 name and information about any existing resource file found in
-`ResourcesPath`, including file size and the last modification date.
+`ResourcesPath`, including how many items each file contains and the last
+modification date.
 
 Run the program with .NET CLI
 
