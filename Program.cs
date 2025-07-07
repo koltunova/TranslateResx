@@ -87,7 +87,8 @@ class Program
             Console.WriteLine("Select an option:");
             Console.WriteLine("1. Translate resource file");
             Console.WriteLine("2. Cleanup resource files");
-            Console.WriteLine("3. Quit");
+            Console.WriteLine("3. Quality check resource file");
+            Console.WriteLine("4. Quit");
             Console.Write(" > ");
 
             var choice = Console.ReadLine()?.Trim().ToLowerInvariant();
@@ -106,6 +107,10 @@ class Program
                     RunCleanupInteractive();
                     break;
                 case "3":
+                case "quality":
+                    await RunQualityCheckInteractive(configuration);
+                    break;
+                case "4":
                 case "q":
                 case "quit":
                     return 0;
@@ -176,6 +181,40 @@ class Program
         var targetFiles = (targets ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
         RunCleanup(sourceFile, targetFiles);
+    }
+
+    /// <summary>
+    /// Interactively runs quality check on a translated resource file.
+    /// </summary>
+    private static async Task RunQualityCheckInteractive(IConfiguration configuration)
+    {
+        string resourcesDir = configuration["Files:ResourcesPath"] ?? string.Empty;
+        string defaultSourceLanguage = "en";
+        string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
+
+        Console.WriteLine($"Resources directory: {resourcesDir}");
+
+        Console.Write($"Reference language code [{defaultSourceLanguage}]: ");
+        string? sourceLanguage = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(sourceLanguage))
+            sourceLanguage = defaultSourceLanguage;
+
+        Console.Write("Target language code: ");
+        string? targetLanguage = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(targetLanguage))
+            return;
+
+        string sourceFilePath = GetExistingResourceFilePath(resourcesDir, sourceLanguage, true);
+        string targetFilePath = GetExistingResourceFilePath(resourcesDir, targetLanguage, true);
+
+        Console.WriteLine($"Checking quality from {targetFilePath} against {sourceFilePath}");
+
+        var results = await TranslationQualityChecker.CheckQualityAsync(subscriptionKey ?? string.Empty, sourceFilePath, targetFilePath, sourceLanguage, targetLanguage);
+
+        foreach (var r in results.OrderBy(r => r.Rating))
+        {
+            Console.WriteLine($"{r.Key}: {r.Rating}");
+        }
     }
 
     /// <summary>
@@ -278,120 +317,9 @@ class Program
     /// </summary>
     private static async Task TranslateResxFile(string? subscriptionKey, string? sourceFilePath, string? targetFilePath, string? targetLanguage)
     {
-        // Validate the critical parameters before proceeding. Missing values
-        // would cause the translation service to fail or the files to be
-        // inaccessible.
-        if (string.IsNullOrWhiteSpace(subscriptionKey) ||
-            string.IsNullOrWhiteSpace(sourceFilePath) ||
-            string.IsNullOrWhiteSpace(targetFilePath) ||
-            string.IsNullOrWhiteSpace(targetLanguage))
-        {
-            Console.WriteLine("One or more required configuration values are missing.");
+        if (subscriptionKey is null || sourceFilePath is null || targetFilePath is null || targetLanguage is null)
             return;
-        }
-
-        // The Azure SDK uses AzureKeyCredential to pass the subscription key.
-        AzureKeyCredential credential = new(subscriptionKey);
-
-        // Create the client that communicates with Azure. Any issues with
-        // the endpoint or credentials will throw an exception that we catch
-        // to show a friendly error message.
-        TextTranslationClient translationService;
-        try
-        {
-            translationService = new TextTranslationClient(credential);
-        }
-        catch (Exception ex) when (ex is UriFormatException || ex is ArgumentException)
-        {
-            Console.WriteLine(ex is UriFormatException
-                ? "The endpoint URL is not valid."
-                : "The subscription key is not valid.");
-            return;
-        }
-
-        // Make sure the source file exists before trying to load it.
-        if (!File.Exists(sourceFilePath))
-        {
-            Console.WriteLine($"Source file not found: {sourceFilePath}");
-            return;
-        }
-
-        // Load the XML file that contains our strings. If the file is not a
-        // valid XML document we stop and let the user know.
-        XDocument sourceDoc;
-        try
-        {
-            sourceDoc = XDocument.Load(sourceFilePath);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Failed to load the source file as an XML document: {ex.Message}");
-            return;
-        }
-
-        // Each translatable string is stored in a <data> element with a
-        // <value> child. The LINQ query filters out any entries without text.
-        var dataElements = sourceDoc.Descendants("data")
-                                    .Where(x => x.Element("value") != null);
-
-        if (!dataElements.Any())
-        {
-            Console.WriteLine("The source file does not contain any translatable elements.");
-            return;
-        }
-
-        int total = dataElements.Count();
-        int current = 0;
-
-        // Process each string one by one while displaying progress.
-        foreach (var dataElement in dataElements)
-        {
-            current++;
-            string sourceText = dataElement.Element("value")?.Value ?? string.Empty;
-
-            if (string.IsNullOrEmpty(sourceText))
-                continue;
-
-            try
-            {
-                // Some strings may contain HTML markup. HtmlAgilityPack helps
-                // us parse the markup so that we only translate the text
-                // inside the tags.
-                HtmlDocument doc = new HtmlDocument();
-                doc.LoadHtml(sourceText);
-
-                foreach (var textNode in doc.DocumentNode.DescendantsAndSelf().Where(n => n.NodeType == HtmlNodeType.Text))
-                {
-                    string nodeText = textNode.InnerHtml;
-                    var response = await translationService.TranslateAsync(targetLanguage, nodeText);
-                    var result = response.Value.FirstOrDefault();
-                    string translatedText = result?.Translations.FirstOrDefault()?.Text;
-
-                    if (translatedText != null)
-                    {
-                        textNode.InnerHtml = translatedText;
-                    }
-                }
-
-                // Replace the original text with the translated version.
-                string translatedHtml = doc.DocumentNode.OuterHtml;
-                dataElement.Element("value")!.Value = translatedHtml;
-
-                // Update progress bar in the console.
-                ShowProgress(current, total);
-            }
-            catch (RequestFailedException ex)
-            {
-                Console.WriteLine($"Translation failed. Error code: {ex.ErrorCode}, Message: {ex.Message}");
-                return;
-            }
-        }
-
-        // Finally save all translations to the target .resx file.
-        sourceDoc.Save(targetFilePath);
-
-        // Move to the next line after the progress bar when done.
-        Console.WriteLine();
+        await ResxTranslator.TranslateFileAsync(subscriptionKey, sourceFilePath, targetFilePath, targetLanguage);
     }
 
     /// <summary>
@@ -399,7 +327,7 @@ class Program
     /// </summary>
     /// <param name="current">Number of items processed so far.</param>
     /// <param name="total">Total number of items to process.</param>
-    private static void ShowProgress(int current, int total)
+    public static void ShowProgress(int current, int total)
     {
         const int barWidth = 50;
         double progress = (double)current / total;
