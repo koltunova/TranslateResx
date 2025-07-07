@@ -37,22 +37,17 @@ Only a few values are required:
   "Files": {
     // Folder that holds Strings.<culture>.resx files
     "ResourcesPath": "path_to_resources"
-  },
-  "Localization": {
-    "SupportedCultures": ["en-US", "de-DE", ...],
-    // Short list shown as suggestions in the UI
-    "ExampleLanguages": ["en", "ru"]
   }
 }
 ```
 
-`SupportedCultures` defines which languages appear in the menu while `ExampleLanguages` provides quick suggestions. `ResourcesPath` should point to the directory that contains all your `.resx` files. Language codes are mapped to display names in `LanguageData.cs` so that the UI can show user-friendly names while the configuration continues to use codes.
+`ResourcesPath` should point to the directory that contains all your `.resx` files. Language codes are mapped to display names in `LanguageData.cs` so that the UI can show user-friendly names while the configuration continues to use codes.
 
 When you run the application with no command line arguments a simple menu is displayed. Choose **Translate resource file** and the tool will use the resources directory configured in `appsettings.json`. The selected path is printed so you know which folder is being used. You are prompted only for the source language and one or more target languages. Leaving the source language blank defaults to `en`. The tool automatically builds file names like `Strings.en.resx` or `Strings.fr.resx` based on your input. Both two letter codes and full culture names are supported when locating files. If a resource file for `en` or `en-US` is missing the program will use `Strings.resx`; for all other languages the file must exist or an error is shown.
 
 Whenever the menu is displayed the program prints a table of all
-configured cultures. The table shows each language code, its friendly
-name and information about any existing resource file found in
+languages defined in `LanguageData.cs`. The table shows each language code,
+its friendly name and information about any existing resource file found in
 `ResourcesPath`, including how many items each file contains and the last
 modification date.
 
