@@ -198,13 +198,13 @@ class Program
     private static void PrintLanguagesTable(IEnumerable<CultureInfo> cultures, string resourcesPath)
     {
         Console.WriteLine("Supported cultures:");
-        Console.WriteLine($"{"Code",-10} {"Name",-30} {"File",-20} {"Size",10} {"Updated",-20}");
+        Console.WriteLine($"{"Code",-10} {"Name",-30} {"File",-20} {"Items",10} {"Updated",-20}");
         Console.WriteLine(new string('-', 92));
         foreach (var culture in cultures)
         {
             string name = LanguageData.Names.TryGetValue(culture.Name, out var display) ? display : culture.DisplayName;
             string fileName = string.Empty;
-            string size = string.Empty;
+            string items = string.Empty;
             string updated = string.Empty;
             if (!string.IsNullOrWhiteSpace(resourcesPath))
             {
@@ -213,11 +213,19 @@ class Program
                 {
                     var info = new FileInfo(path);
                     fileName = info.Name;
-                    size = info.Length.ToString();
+                    try
+                    {
+                        var doc = XDocument.Load(path);
+                        items = doc.Descendants("data").Count().ToString();
+                    }
+                    catch
+                    {
+                        items = "?";
+                    }
                     updated = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm");
                 }
             }
-            Console.WriteLine($"{culture.Name,-10} {name,-30} {fileName,-20} {size,10} {updated,-20}");
+            Console.WriteLine($"{culture.Name,-10} {name,-30} {fileName,-20} {items,10} {updated,-20}");
         }
     }
 
@@ -332,9 +340,13 @@ class Program
             return;
         }
 
-        // Process each string one by one.
+        int total = dataElements.Count();
+        int current = 0;
+
+        // Process each string one by one while displaying progress.
         foreach (var dataElement in dataElements)
         {
+            current++;
             string sourceText = dataElement.Element("value")?.Value ?? string.Empty;
 
             if (string.IsNullOrEmpty(sourceText))
@@ -365,9 +377,8 @@ class Program
                 string translatedHtml = doc.DocumentNode.OuterHtml;
                 dataElement.Element("value")!.Value = translatedHtml;
 
-                // Show the user each translation so they can follow progress.
-                Console.WriteLine($"Source Text: {sourceText}");
-                Console.WriteLine($"Translated Text: {translatedHtml}");
+                // Update progress bar in the console.
+                ShowProgress(current, total);
             }
             catch (RequestFailedException ex)
             {
@@ -378,5 +389,30 @@ class Program
 
         // Finally save all translations to the target .resx file.
         sourceDoc.Save(targetFilePath);
+
+        // Move to the next line after the progress bar when done.
+        Console.WriteLine();
+    }
+
+    /// <summary>
+    /// Displays a simple progress bar in the console.
+    /// </summary>
+    /// <param name="current">Number of items processed so far.</param>
+    /// <param name="total">Total number of items to process.</param>
+    private static void ShowProgress(int current, int total)
+    {
+        const int barWidth = 50;
+        double progress = (double)current / total;
+        int position = (int)(progress * barWidth);
+
+        Console.Write("\r[");
+        Console.Write(new string('#', position));
+        Console.Write(new string('-', barWidth - position));
+        Console.Write($"] {progress:P0}");
+
+        if (current == total)
+        {
+            Console.WriteLine();
+        }
     }
 }
