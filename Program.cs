@@ -55,15 +55,11 @@ class Program
         using var serviceProvider = services.BuildServiceProvider();
         serviceProvider.GetRequiredService<IStringLocalizer>();
 
-        // Read the list of languages that our application supports and a
-        // shorter list of example languages that will be displayed to the
-        // user. These values come from appsettings.json.
-        var supportedCultureCodes = configuration.GetSection("Localization:SupportedCultures").Get<string[]>() ?? Array.Empty<string>();
-        var exampleLanguages = configuration.GetSection("Localization:ExampleLanguages").Get<string[]>() ?? Array.Empty<string>();
-
-        // Convert the string codes like "en-US" into CultureInfo objects so
-        // that .NET can handle formatting and resource lookups correctly.
-        CultureInfo[] supportedCultures = supportedCultureCodes.Select(code => new CultureInfo(code)).ToArray();
+        // Build the list of cultures directly from the language dictionary.
+        CultureInfo[] supportedCultures = LanguageData.Names
+            .Keys
+            .Select(code => new CultureInfo(code))
+            .ToArray();
 
         // Save the resources path so it can be reused when the menu is shown.
         string resourcesPath = configuration["Files:ResourcesPath"] ?? string.Empty;
@@ -76,12 +72,6 @@ class Program
             // Display the configured languages table every time the menu appears
             // so the user can easily see available resources.
             PrintLanguagesTable(supportedCultures, resourcesPath);
-
-            // The example languages list is shorter and intended to show beginners
-            // which languages they might want to try translating into.
-            Console.WriteLine();
-            Console.WriteLine("Example languages: " + string.Join(", ", exampleLanguages
-                .Select(l => LanguageData.Names.TryGetValue(l, out var n) ? $"{l} ({n})" : l)));
 
             Console.WriteLine();
             Console.WriteLine("Select an option:");
