@@ -78,7 +78,8 @@ class Program
             Console.WriteLine("1. Translate resource file");
             Console.WriteLine("2. Cleanup resource files");
             Console.WriteLine("3. Quality check resource file");
-            Console.WriteLine("4. Quit");
+            Console.WriteLine("4. Help");
+            Console.WriteLine("5. Quit");
             Console.Write(" > ");
 
             var choice = Console.ReadLine()?.Trim().ToLowerInvariant();
@@ -101,6 +102,11 @@ class Program
                     await RunQualityCheckInteractive(configuration);
                     break;
                 case "4":
+                case "h":
+                case "help":
+                    ShowHelp(configuration);
+                    break;
+                case "5":
                 case "q":
                 case "quit":
                     return 0;
@@ -222,6 +228,28 @@ class Program
         }
 
         Console.WriteLine("Cleanup functionality is not implemented yet.");
+    }
+
+    private static void ShowHelp(IConfiguration configuration)
+    {
+        string resourcesDir = configuration["Files:ResourcesPath"] ?? "<not configured>";
+
+        Console.WriteLine("Help");
+        Console.WriteLine();
+        Console.WriteLine("1. Translate resource file");
+        Console.WriteLine("   Uses Azure Translator to create or update language specific .resx files.");
+        Console.WriteLine($"   Resource files are read from: {resourcesDir}");
+        Console.WriteLine("   Leaving the source language blank defaults to 'en'.");
+        Console.WriteLine("   Enter one or more target language codes separated by spaces.");
+        Console.WriteLine();
+        Console.WriteLine("2. Cleanup resource files");
+        Console.WriteLine("   Removes entries from target files that don't exist in the source file (not implemented yet).");
+        Console.WriteLine();
+        Console.WriteLine("3. Quality check resource file");
+        Console.WriteLine("   Compares translations with a back-translation to rate their quality.");
+        Console.WriteLine("   Reference language defaults to 'en'.");
+        Console.WriteLine();
+        Console.WriteLine("5. Quit ends the program.");
     }
 
     private static void PrintLanguagesTable(IEnumerable<CultureInfo> cultures, string resourcesPath)
