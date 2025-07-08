@@ -70,7 +70,7 @@ TranslateResx cleanup --source <resx> --target <file1> [<file2> ...]
 ### Example
 
 Run the tool without arguments and select **Translate resource file** from the menu.
-When prompted you can press Enter to use the resources directory from `appsettings.json` and leave the source language blank to use `en`. Then enter one or more target languages separated by spaces. For instance entering `de fr` will create `Strings.de.resx` and `Strings.fr.resx` next to your source file.
+When prompted you can press Enter to use the resources directory from `appsettings.json` and leave the source language blank to use `en`. Then enter one or more target languages separated by commas and/or spaces. For instance entering `de, fr` or `de fr` will create `Strings.de.resx` and `Strings.fr.resx` next to your source file.
 
 
 Contributing

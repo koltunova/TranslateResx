@@ -136,10 +136,14 @@ class Program
         if (string.IsNullOrWhiteSpace(sourceLanguage))
             sourceLanguage = defaultSourceLanguage;
 
-        Console.Write("Target language codes (space separated): ");
+        Console.Write("Target language codes (separate with spaces or commas): ");
         string? targetLanguagesInput = Console.ReadLine();
         var targetLanguages = (targetLanguagesInput ?? string.Empty)
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .SelectMany(part => part.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .Select(lang => lang.Trim())
+            .Where(lang => !string.IsNullOrWhiteSpace(lang))
+            .ToArray();
 
         if (string.IsNullOrWhiteSpace(resourcesDir) ||
             targetLanguages.Length == 0)
