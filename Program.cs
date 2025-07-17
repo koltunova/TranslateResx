@@ -7,6 +7,7 @@ using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using System.Xml.Linq;
+using System.Collections.Generic;
 
 using System.IO;
 /// <summary>
@@ -76,10 +77,11 @@ class Program
             Console.WriteLine();
             Console.WriteLine("Select an option:");
             Console.WriteLine("1. Translate resource file");
-            Console.WriteLine("2. Cleanup resource files");
-            Console.WriteLine("3. Quality check resource file");
-            Console.WriteLine("4. Help");
-            Console.WriteLine("5. Quit");
+            Console.WriteLine("2. Translate missing strings");
+            Console.WriteLine("3. Cleanup resource files");
+            Console.WriteLine("4. Quality check resource file");
+            Console.WriteLine("5. Help");
+            Console.WriteLine("6. Quit");
             Console.Write(" > ");
 
             var choice = Console.ReadLine()?.Trim().ToLowerInvariant();
@@ -94,19 +96,23 @@ class Program
                     await RunTranslateInteractive(configuration);
                     break;
                 case "2":
+                case "missing":
+                    await RunTranslateMissingInteractive(configuration);
+                    break;
+                case "3":
                 case "cleanup":
                     RunCleanupInteractive();
                     break;
-                case "3":
+                case "4":
                 case "quality":
                     await RunQualityCheckInteractive(configuration);
                     break;
-                case "4":
+                case "5":
                 case "h":
                 case "help":
                     ShowHelp(configuration);
                     break;
-                case "5":
+                case "6":
                 case "q":
                 case "quit":
                     return 0;
@@ -163,6 +169,64 @@ class Program
             Console.WriteLine($"Language: {lang}");
 
             await TranslateResxFile(subscriptionKey, sourceFilePath, targetFilePath, lang);
+        }
+    }
+
+    /// <summary>
+    /// Translates only missing entries in all target language files based on a source language.
+    /// </summary>
+    private static async Task RunTranslateMissingInteractive(IConfiguration configuration)
+    {
+        string resourcesDir = configuration["Files:ResourcesPath"] ?? string.Empty;
+        string defaultSourceLanguage = "en";
+        string? subscriptionKey = configuration["AzureTranslation:SubscriptionKey"];
+
+        Console.WriteLine($"Resources directory: {resourcesDir}");
+
+        Console.Write($"Source language code [{defaultSourceLanguage}]: ");
+        string? sourceLanguage = Console.ReadLine();
+        if (string.IsNullOrWhiteSpace(sourceLanguage))
+            sourceLanguage = defaultSourceLanguage;
+
+        Console.Write("Target language codes (separate with spaces or commas, leave blank for all): ");
+        string? targetLanguagesInput = Console.ReadLine();
+
+        List<string> targetLanguages = (targetLanguagesInput ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .SelectMany(p => p.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+            .Select(lang => lang.Trim())
+            .Where(lang => !string.IsNullOrWhiteSpace(lang))
+            .ToList();
+
+        if (!targetLanguages.Any())
+        {
+            if (Directory.Exists(resourcesDir))
+            {
+                var all = Directory.GetFiles(resourcesDir, "Strings.*.resx")
+                    .Select(f => Path.GetFileNameWithoutExtension(f))
+                    .Select(name => name == "Strings" ? "en" : name.Substring("Strings.".Length))
+                    .Distinct()
+                    .Where(code => !string.Equals(code, sourceLanguage, StringComparison.OrdinalIgnoreCase));
+                targetLanguages.AddRange(all);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(resourcesDir) || !targetLanguages.Any())
+        {
+            Console.WriteLine("Resource directory and languages are required.");
+            return;
+        }
+
+        string sourceFilePath = GetExistingResourceFilePath(resourcesDir, sourceLanguage, true);
+        Console.WriteLine($"Source file: {sourceFilePath}");
+
+        foreach (var lang in targetLanguages)
+        {
+            string targetFilePath = Path.Combine(resourcesDir, $"Strings.{lang}.resx");
+            Console.WriteLine();
+            Console.WriteLine($"Updating missing translations in: {targetFilePath}");
+
+            await ResxTranslator.TranslateMissingAsync(subscriptionKey ?? string.Empty, sourceFilePath, targetFilePath, lang);
         }
     }
 
@@ -246,14 +310,19 @@ class Program
         Console.WriteLine("   Leaving the source language blank defaults to 'en'.");
         Console.WriteLine("   Enter one or more target language codes separated by spaces.");
         Console.WriteLine();
-        Console.WriteLine("2. Cleanup resource files");
+        Console.WriteLine("2. Translate missing strings");
+        Console.WriteLine("   Adds translations only for entries missing in target language files.");
+        Console.WriteLine();
+        Console.WriteLine("3. Cleanup resource files");
         Console.WriteLine("   Removes entries from target files that don't exist in the source file (not implemented yet).");
         Console.WriteLine();
-        Console.WriteLine("3. Quality check resource file");
+        Console.WriteLine("4. Quality check resource file");
         Console.WriteLine("   Compares translations with a back-translation to rate their quality.");
         Console.WriteLine("   Reference language defaults to 'en'.");
         Console.WriteLine();
-        Console.WriteLine("5. Quit ends the program.");
+        Console.WriteLine("5. Help displays this message.");
+        Console.WriteLine();
+        Console.WriteLine("6. Quit ends the program.");
     }
 
     private static void PrintLanguagesTable(IEnumerable<CultureInfo> cultures, string resourcesPath)
